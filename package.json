@@ -1,0 +1,13 @@
+{
+  "name": "file-manager",
+  "version": "1.0.0",
+  "description": "Your task is to implement File Manager using Node.js APIs.",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
