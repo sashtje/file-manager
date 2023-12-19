@@ -19,7 +19,7 @@ export class FileManager {
       output: process.strdout,
     });
 
-    rl.on("line", (input) => {
+    rl.on("line", async (input) => {
       let line = input.trim();
 
       if (line === ".exit") {
@@ -28,7 +28,7 @@ export class FileManager {
       }
 
       if (line) {
-        this.handleInput(line);
+        await this.handleInput(line);
       }
 
       this.showInvitation();
@@ -74,20 +74,20 @@ export class FileManager {
     this.showPrompt();
   }
 
-  handleInput(line) {
+  async handleInput(line) {
     const [command, ...args] = line.split(" ").filter((item) => !!item);
 
     try {
       if (Navigation[command]) {
-        Navigation[command](...args);
+        await Navigation[command](...args);
       } else if (BasicOperations[command]) {
-        BasicOperations[command](...args);
+        await BasicOperations[command](...args);
       } else if (Os[command]) {
-        Os[command](...args);
+        await Os[command](...args);
       } else if (Hash[command]) {
-        Hash[command](...args);
+        await Hash[command](...args);
       } else if (Archive[command]) {
-        Archive[command](...args);
+        await Archive[command](...args);
       } else {
         throw new InvalidInputError("no such command exists");
       }
