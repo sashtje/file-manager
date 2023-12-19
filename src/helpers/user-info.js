@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { sep } from "node:path";
 
 export class UserInfo {
-  static currentDirectory = homedir().split(sep).join("/");
+  static #currentDirectory = UserInfo.reverseSlash(homedir());
   static #username = UserInfo.#getUsername();
 
   static #getUsername() {
@@ -23,5 +23,17 @@ export class UserInfo {
 
   static get username() {
     return UserInfo.#username;
+  }
+
+  static reverseSlash(path) {
+    return path.split(sep).join("/");
+  }
+
+  static get currentDirectory() {
+    return UserInfo.#currentDirectory;
+  }
+
+  static set currentDirectory(pathToNewDirectory) {
+    UserInfo.#currentDirectory = UserInfo.reverseSlash(pathToNewDirectory);
   }
 }
