@@ -1,40 +1,16 @@
-import { homedir } from "node:os";
-import { sep } from "node:path";
 import { createInterface } from "node:readline";
 
-import { InvalidInputError } from "./errors.js";
-import { Navigation } from "./navigation.js";
-import { BasicOperations } from "./basic-operations.js";
-import { Os } from "./os-info.js";
-import { Hash } from "./hash.js";
-import { Archive } from "./archive.js";
+import { UserInfo } from "./helpers/user-info.js";
+import { InvalidInputError } from "./helpers/errors.js";
+import { Navigation } from "./commands/navigation.js";
+import { BasicOperations } from "./commands/basic-operations.js";
+import { Os } from "./commands/os-info.js";
+import { Hash } from "./commands/hash.js";
+import { Archive } from "./commands/archive.js";
 
 export class FileManager {
   constructor() {
-    this.username = this.getUsername();
-    this.currentDirectory = this.getHomeDirectory();
-
     this.initIO();
-  }
-
-  getUsername() {
-    let usernameArg = process.argv[2];
-    let usernameArgName = "username";
-    let username = "Anonymous";
-
-    if (usernameArg) {
-      usernameArg = usernameArg.slice(2).split("=");
-
-      if (usernameArg[0] === usernameArgName && usernameArg[1]) {
-        username = usernameArg[1];
-      }
-    }
-
-    return username;
-  }
-
-  getHomeDirectory() {
-    return homedir().split(sep).join("/");
   }
 
   initIO() {
@@ -76,7 +52,7 @@ export class FileManager {
   }
 
   showWelcome() {
-    console.log(`Welcome to the File Manager, ${this.username}!`);
+    console.log(`Welcome to the File Manager, ${UserInfo.username}!`);
   }
 
   showGoodbye({ lineBreaks }) {
@@ -84,11 +60,13 @@ export class FileManager {
       process.stdout.write("\n".repeat(lineBreaks));
     }
 
-    console.log(`Thank you for using File Manager, ${this.username}, goodbye!`);
+    console.log(
+      `Thank you for using File Manager, ${UserInfo.username}, goodbye!`
+    );
   }
 
   showCurrentDirectory() {
-    console.log(`\nYou are currently in ${this.currentDirectory}`);
+    console.log(`\nYou are currently in ${UserInfo.currentDirectory}`);
   }
 
   showInvitation() {
@@ -100,7 +78,19 @@ export class FileManager {
     const [command, ...args] = line.split(" ").filter((item) => !!item);
 
     try {
-      //
+      if (Navigation[command]) {
+        Navigation[command](...args);
+      } else if (BasicOperations[command]) {
+        BasicOperations[command](...args);
+      } else if (Os[command]) {
+        Os[command](...args);
+      } else if (Hash[command]) {
+        Hash[command](...args);
+      } else if (Archive[command]) {
+        Archive[command](...args);
+      } else {
+        throw new InvalidInputError("no such command exists");
+      }
     } catch (err) {
       console.log(err.message);
     }
