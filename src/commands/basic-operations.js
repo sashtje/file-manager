@@ -1,4 +1,5 @@
 import { createReadStream } from "node:fs";
+import { open } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 
 import { InvalidInputError, OperationFailedError } from "../helpers/errors.js";
@@ -21,7 +22,21 @@ export class BasicOperations {
     }
   }
 
-  static async add(newFileName) {}
+  static async add(...newFileNameChunks) {
+    const input = newFileNameChunks.join(" ");
+
+    if (input.includes("/") || input.includes("\\")) {
+      throw new InvalidInputError("invalid file name");
+    }
+
+    let [fileName] = getAbsolutePath(newFileNameChunks, 1);
+
+    try {
+      await open(fileName, "wx+");
+    } catch (err) {
+      throw new OperationFailedError(err.message);
+    }
+  }
 
   static async rn(pathToFile, newFileName) {}
 
