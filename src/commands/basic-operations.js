@@ -1,13 +1,33 @@
+import { createReadStream } from "node:fs";
+import { pipeline } from "node:stream/promises";
+
+import { InvalidInputError, OperationFailedError } from "../helpers/errors.js";
+import { getAbsolutePath } from "../helpers/getAbsolutePath.js";
+
 export class BasicOperations {
-  static cat(pathToFile) {}
+  static async cat(...chunksArgs) {
+    let [pathToFile] = getAbsolutePath(chunksArgs, 1);
 
-  static add(newFileName) {}
+    try {
+      const input = createReadStream(pathToFile);
 
-  static rn(pathToFile, newFileName) {}
+      await pipeline(input, process.stdout, { end: false });
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        throw new InvalidInputError("no such file or directory");
+      } else {
+        throw new OperationFailedError(err.message);
+      }
+    }
+  }
 
-  static cp(pathToFile, pathToNewDirectory) {}
+  static async add(newFileName) {}
 
-  static mv(pathToFile, pathToNewDirectory) {}
+  static async rn(pathToFile, newFileName) {}
 
-  static rm(pathToFile) {}
+  static async cp(pathToFile, pathToNewDirectory) {}
+
+  static async mv(pathToFile, pathToNewDirectory) {}
+
+  static async rm(pathToFile) {}
 }
