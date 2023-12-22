@@ -1,9 +1,8 @@
 import { normalize, isAbsolute } from "node:path";
 
-import { UserInfo } from "../helpers/user-info.js";
-import { InvalidInputError } from "../helpers/errors.js";
+import { UserInfo } from "./user-info.js";
 
-export function getAbsolutePath(pathChunks, numberArgs) {
+export function getCommandArgs(pathChunks) {
   let args = [];
   let chunksInOnePath = "";
 
@@ -28,19 +27,22 @@ export function getAbsolutePath(pathChunks, numberArgs) {
     }
   }
 
-  if (args.length > numberArgs) {
-    throw new InvalidInputError("too many arguments");
-  } else if (args.length < numberArgs) {
-    throw new InvalidInputError("too little arguments");
+  return args;
+}
+
+export function convertPathToAbsolute(path) {
+  if (!isAbsolute(path)) {
+    return normalize(UserInfo.currentDirectory + "/" + path);
   }
 
-  args = args.map((pathItem) => {
-    if (!isAbsolute(pathItem)) {
-      return normalize(UserInfo.currentDirectory + "/" + pathItem);
-    }
+  return path;
+}
 
-    return pathItem;
-  });
+export function getCommandArgsWithAbsolutePath(pathChunks) {
+  return getCommandArgs(pathChunks).map(convertPathToAbsolute);
+}
 
-  return args;
+export function isCorrectFileName(fileName) {
+  const forbiddenChars = ["\\", "/", ":", "*", "?", '"', "<", ">", "|"];
+  return forbiddenChars.every((char) => !fileName.includes(char));
 }

@@ -2,8 +2,8 @@ import { normalize } from "node:path";
 import { readdir } from "node:fs/promises";
 
 import { UserInfo } from "../helpers/user-info.js";
-import { OperationFailedError } from "../helpers/errors.js";
-import { getAbsolutePath } from "../helpers/getAbsolutePath.js";
+import { OperationFailedError, InvalidInputError } from "../helpers/errors.js";
+import { getCommandArgsWithAbsolutePath } from "../helpers/getArgsFromArgsChunks.js";
 
 export class Navigation {
   static up() {
@@ -11,7 +11,15 @@ export class Navigation {
   }
 
   static async cd(...chunksArgs) {
-    let [pathToDirectory] = getAbsolutePath(chunksArgs, 1);
+    let [pathToDirectory, ...rest] = getCommandArgsWithAbsolutePath(chunksArgs);
+
+    if (!pathToDirectory) {
+      throw new InvalidInputError("directory path not specified");
+    }
+
+    if (rest.length) {
+      throw new InvalidInputError("too many arguments");
+    }
 
     try {
       await readdir(pathToDirectory);
