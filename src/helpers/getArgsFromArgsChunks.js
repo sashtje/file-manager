@@ -1,6 +1,8 @@
 import { normalize, isAbsolute } from "node:path";
+import { stat } from "node:fs/promises";
 
 import { UserInfo } from "./user-info.js";
+import { InvalidInputError } from "./errors.js";
 
 export function getCommandArgs(pathChunks) {
   let args = [];
@@ -45,4 +47,12 @@ export function getCommandArgsWithAbsolutePath(pathChunks) {
 export function isCorrectFileName(fileName) {
   const forbiddenChars = ["\\", "/", ":", "*", "?", '"', "<", ">", "|"];
   return forbiddenChars.every((char) => !fileName.includes(char));
+}
+
+export async function validateIfPathToFile(pathToFile) {
+  const statResult = await stat(pathToFile);
+
+  if (!statResult.isFile()) {
+    throw new InvalidInputError("first argument is not a file path");
+  }
 }

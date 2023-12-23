@@ -1,6 +1,6 @@
-import { sep } from "node:path";
-import { createReadStream } from "node:fs";
-import { open, rename, stat } from "node:fs/promises";
+import { sep, normalize } from "node:path";
+import { createReadStream, createWriteStream } from "node:fs";
+import { open, rename } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 
 import { InvalidInputError, OperationFailedError } from "../helpers/errors.js";
@@ -9,6 +9,7 @@ import {
   getCommandArgs,
   convertPathToAbsolute,
   isCorrectFileName,
+  validateIfPathToFile,
 } from "../helpers/getArgsFromArgsChunks.js";
 
 export class BasicOperations {
@@ -27,6 +28,7 @@ export class BasicOperations {
       const input = createReadStream(pathToFile);
 
       await pipeline(input, process.stdout, { end: false });
+      console.log("");
     } catch (err) {
       if (err.code === "ENOENT") {
         throw new InvalidInputError("no such file or directory");
@@ -81,19 +83,47 @@ export class BasicOperations {
       .join(sep);
 
     try {
-      const statResult = await stat(absolutePathToFile);
-
-      if (!statResult.isFile()) {
-        throw new InvalidInputError("first argument is not a file path");
-      }
+      await validateIfPathToFile(absolutePathToFile);
 
       await rename(absolutePathToFile, pathToNewNameFile);
     } catch (err) {
+      if (err instanceof InvalidInputError) {
+        throw err;
+      }
       throw new OperationFailedError(err.message);
     }
   }
 
-  static async cp(...chunksArgs) {}
+  static async cp(...chunksArgs) {
+    let [pathToFile, pathToDirectory, ...rest] =
+      getCommandArgsWithAbsolutePath(chunksArgs);
+
+    if (!pathToFile || !pathToDirectory) {
+      throw new InvalidInputError("too little arguments");
+    }
+
+    if (rest.length) {
+      throw new InvalidInputError("too many arguments");
+    }
+
+    const pathToCopy = normalize(
+      pathToDirectory + "/" + pathToFile.split(sep).at(-1)
+    );
+
+    try {
+      await validateIfPathToFile(pathToFile);
+
+      const input = createReadStream(pathToFile);
+      const output = createWriteStream(pathToCopy, { flags: "wx" });
+
+      await pipeline(input, output);
+    } catch (err) {
+      if (err instanceof InvalidInputError) {
+        throw err;
+      }
+      throw new OperationFailedError(err.message);
+    }
+  }
 
   static async mv(...chunksArgs) {}
 
