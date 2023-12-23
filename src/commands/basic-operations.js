@@ -1,6 +1,6 @@
 import { sep, normalize } from "node:path";
 import { createReadStream, createWriteStream } from "node:fs";
-import { open, rename } from "node:fs/promises";
+import { open, rename, unlink } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 
 import { InvalidInputError, OperationFailedError } from "../helpers/errors.js";
@@ -127,5 +127,26 @@ export class BasicOperations {
 
   static async mv(...chunksArgs) {}
 
-  static async rm(...chunksArgs) {}
+  static async rm(...chunksArgs) {
+    let [pathToFile, ...rest] = getCommandArgsWithAbsolutePath(chunksArgs);
+
+    if (!pathToFile) {
+      throw new InvalidInputError("too little arguments");
+    }
+
+    if (rest.length) {
+      throw new InvalidInputError("too many arguments");
+    }
+
+    try {
+      await validateIfPathToFile(pathToFile);
+
+      await unlink(pathToFile);
+    } catch (err) {
+      if (err instanceof InvalidInputError) {
+        throw err;
+      }
+      throw new OperationFailedError(err.message);
+    }
+  }
 }
