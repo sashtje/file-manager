@@ -125,7 +125,11 @@ export class BasicOperations {
     }
   }
 
-  static async mv(...chunksArgs) {}
+  static async mv(...chunksArgs) {
+    await this.cp(...chunksArgs);
+    let [pathToFile] = getCommandArgsWithAbsolutePath(chunksArgs);
+    await unlink(pathToFile);
+  }
 
   static async rm(...chunksArgs) {
     let [pathToFile, ...rest] = getCommandArgsWithAbsolutePath(chunksArgs);
